@@ -1,0 +1,5 @@
+---
+#Adds accounts and ssh keys to servers
+- hosts: all
+  roles:
+  - update-repo

@@ -1,0 +1,3 @@
+---
+rsa_smartling_src: id_rsa_smartling
+rsa_smartling_dest: /etc/ssh

@@ -1,0 +1,5 @@
+ansible_vault_password 
+.DS_Store
+.vagrant
+site.retry
+.idea/

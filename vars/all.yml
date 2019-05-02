@@ -1,0 +1,13 @@
+---
+bot_user_hockeybot: hockeybot
+bot_user_buildbot: buildbot
+config_dir: /etc/init/
+ruby_version_hockeybot: ruby-2.1.0
+gem_binary_hockeybot: "/srv/.rvm/gems/{{ ruby_version_hockeybot }}/bin"
+rubies_binary_hockeybot: "/srv/.rvm/rubies/{{ ruby_version_hockeybot }}/bin"
+ruby_version_buildbot: ruby-2.1.0
+gem_binary_buildbot: "/srv/.rvm/gems/{{ ruby_version_buildbot }}/bin"
+rubies_binary_buildbot: "/srv/.rvm/rubies/{{ ruby_version_buildbot }}/bin"
+repo_group: repos
+git_key_file: /etc/ssh/id_rsa_smartling
+slack_channel: bots

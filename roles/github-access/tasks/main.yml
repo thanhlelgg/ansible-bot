@@ -1,0 +1,10 @@
+---
+- include_vars: "vars/all.yml"
+- include_vars: "roles/hockeybot-service/vars/main.yml"
+- include_vars: "vars/protected.yml"
+- name: Copy Keys
+  become: yes
+  copy:
+    src: "{{ rsa_smartling_src }}"
+    dest: "{{ rsa_smartling_dest }}"
+    mode: 0600

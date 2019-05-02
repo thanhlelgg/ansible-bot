@@ -1,0 +1,5 @@
+---
+repo_location_hockeybot: "/srv/repos/lita-slack-jira-hockeyapp-mode"
+git_repo_hockeybot: git@github.com:/anki/lita-slack-jira-hockeyapp-mode.git
+crashdata_dir: "{{ repo_location_hockeybot }}/scripts/"
+crashdata_name: s3_push_hockeyapp_crash_data.sh

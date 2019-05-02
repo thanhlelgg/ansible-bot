@@ -1,0 +1,40 @@
+- include_vars: "vars/all.yml"
+- name: Check if repo exists
+  stat:
+    path: "{{ repo_location }}"
+  register: repo_stat
+- name: Set repo permissions
+  become: yes
+  file:
+    mode: "0770"
+    recurse: yes
+    owner: "{{ bot_user }}"
+    path: "{{ repo_location }}"
+    group: "{{ repo_group }}"
+  when: repo_stat.stat.exists == true
+- name: Backup Repo
+  become: yes
+#Currently the ansible command copy with remote_src does not support recursive copying.
+  command: cp -rf --preserve=mode,ownership {{ repo_location }} {{ repo_location }}_bk
+  ignore_errors: yes
+  when: repo_stat.stat.exists == true
+- name: Check if config exists
+  stat:
+    path: "{{ config_location }}"
+  register: config_stat
+- name: Backup Config
+  become: yes
+  copy:
+    src: "{{ config_location }}"
+    dest: "{{ config_location }}_bk"
+    remote_src: True
+    owner: "{{ bot_user }}"
+    group: "{{ repo_group }}"
+  ignore_errors: yes
+  when: config_stat.stat.exists == true
+- name: Clean Repo
+  become: yes
+  command: "git clean -ffxd"
+  args:
+    chdir: "{{ repo_location }}"
+  when: repo_stat.stat.exists == true

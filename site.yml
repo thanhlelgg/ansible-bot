@@ -1,0 +1,28 @@
+---
+#Adds accounts and ssh keys to servers
+
+- hosts: all
+  roles:
+  - ssh-repos
+  - ssh-no-repos
+  - github-access
+  - setup
+  - role: update-repo
+    when: skip_update is not defined
+  - self-updater-service
+  - { role: rvm.ruby,
+      tags: ruby,
+      become: yes,
+      rvm1_rubies: ['{{ ruby_version_buildbot }}', '{{ ruby_version_hockeybot }}'],
+      rvm1_user: 'root',
+      rvm1_bundler_install: True,
+      rvm1_autolib_mode: 2,
+      rvm1_install_path: '/srv/.rvm',
+      rvm1_gpg_keys: '7D2BAF1CF37B13E2069D6956105BD0E739499BDB',
+      rvm1_rvm_check_for_updates: False
+    }
+  - hockeybot-service
+  - apprunbot
+  - firmwarecrashreport
+  - buildbot-service
+  - s3pushcrashdata

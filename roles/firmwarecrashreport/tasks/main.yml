@@ -1,0 +1,52 @@
+---
+- include_vars: "vars/all.yml"
+- include_vars: "roles/firmwarecrashreport/vars/main.yml"
+- include_vars: "vars/protected.yml"
+- name: Clone Repo Cozmo
+  become: yes
+  git:
+    repo: "{{ git_repo_cozmo }}"
+    dest: "{{ repo_location_cozmo }}"
+    accept_hostkey: yes
+    depth: 1
+    key_file: "{{ git_key_file }}"
+    force: yes
+- name: Set permissions in Apprun
+  become: yes
+  file:
+    mode: "0770"
+    path: "{{ repo_location_cozmo }}"
+    group: "{{ repo_group }}"
+    owner: "{{ bot_user_hockeybot }}"
+    recurse: yes
+- name: Copy BuildBot Service
+  become: yes
+  copy:
+    src: "{{ firmware_name }}"
+    dest: "{{ firmware_dir }}"
+    owner: "{{ bot_user_hockeybot }}"
+    group: "{{ repo_group }}"
+- name: Set permissions in Firmware
+  become: yes
+  file:
+    mode: "0770"
+    path: "{{ firmware_dir }}{{ firmware_name }}"
+    group: "{{ repo_group }}"
+    owner: "{{ bot_user_hockeybot }}"
+- name: Replace location in apprun
+  become: yes
+  replace:
+    path: "{{ firmware_dir }}/{{ firmware_name }}"
+    replace: "{{ repo_location_cozmo }}"
+    regexp: 'REPO_HOME'
+- name: Replace vars in Firmware
+  become: no
+  lineinfile:
+    path: "{{ firmware_dir }}{{ firmware_name }}"
+    regexp: '^export {{ item.name }}.*$'
+    line: "export {{ item.name }}={{ item.value }}"
+  with_items:
+    - { name: "JIRA_USER", value: "{{ jira_username }}" }
+    - { name: "JIRA_PASS", value: "{{ jira_password }}" }
+    - { name: "MODE_USER", value: "{{ mode_user_firmware }}" }
+    - { name: "MODE_PASS", value: "{{ mode_password_firmware }}" }

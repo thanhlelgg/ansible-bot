@@ -1,0 +1,10 @@
+---
+service_name_hockeybot: lita-hockeybot
+config_name_hockeybot: "{{ service_name_hockeybot }}.conf"
+config_location_hockeybot: "{{ config_dir }}/{{ config_name_hockeybot }}"
+repo_location_hockeybot: "/srv/repos/lita-slack-jira-hockeyapp-mode"
+git_repo_hockeybot: git@github.com:/anki/lita-slack-jira-hockeyapp-mode.git
+channel: "bots"
+pull_request: https://github.com/anki/lita-slack-jira-hockeyapp-mode/pull/
+log_filepath_last_run: "/tmp/hockeybot-upstart-rspec-last-run-result.log"
+log_filepath_all_time: "/tmp/hockeybot-upstart-rspec.log"

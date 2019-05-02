@@ -1,0 +1,50 @@
+- include_vars: "vars/all.yml"
+- include_vars: "vars/protected.yml"
+- name: Clone {{ repo_name }}
+  become: yes
+  git:
+    repo: "{{ git_repo }}"
+    dest: "{{ repo_location }}"
+    accept_hostkey: yes
+    force: yes
+    key_file: "{{ git_key_file }}"
+  register: git_clone_status
+- block: 
+  - name: Get latest commit message 
+    shell: "git log --pretty=\"%s\" -n1"
+    args:
+      chdir: "{{ repo_location }}"
+    register: latest_commit_message
+  - name: Get commit PR 
+    set_fact:
+      commit_pr: "{{ latest_commit_message.stdout | regex_search('#(\\d*)\\)$','\\1') | first }}"
+    ignore_errors: yes
+  - name: Set Slack message if repo has changes with PR
+    set_fact:
+      slack_message: "Latest change {{ service_name }} applied: 
+                      <{{ pull_request_url }}{{ commit_pr }}|{{ latest_commit_message.stdout }}>"
+    when: commit_pr is defined
+  - name: Set Slack message if repo has changes without PR
+    set_fact:
+      slack_message: "Latest change {{ service_name }} applied: 
+                      *{{ latest_commit_message.stdout }}*"
+    when: commit_pr is not defined
+  when: git_clone_status.before != git_clone_status.after
+- name: Set Slack message if repo hasn't changed
+  set_fact:
+    slack_message: "{{ service_name }} repo has no change"
+  when: git_clone_status.before == git_clone_status.after
+- name: Post latest changes to Slack
+  uri:
+    url: https://slack.com/api/chat.postMessage
+    method: POST
+    body: "token={{ slack_token_hockeybot }}& channel={{ slack_channel }}& 
+           text={{ slack_message }}& username= {{ bot_user_hockeybot }}"
+- name: Set repo permissions
+  become: yes
+  file:
+    mode: "0770"
+    recurse: yes
+    owner: "{{ bot_user }}"
+    path: "{{ repo_location }}"
+    group: "{{ repo_group }}"

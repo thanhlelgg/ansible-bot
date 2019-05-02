@@ -1,0 +1,36 @@
+---
+- include_vars: "vars/all.yml"
+#create user account, extracting usernames from the list of files in ./files 
+- name: Allow sudo without password to members of the sudo group
+  become: yes
+  template: src=sudoers.j2 dest=/etc/sudoers mode=0440
+
+- name: Disallow ssh logins with passwords
+  become: yes
+  template: src=sshd_config.j2 dest=/etc/ssh/sshd_config mode=0644
+
+- name: Allow su without password to members of the sudo group
+  become: yes
+  template: src=su.j2 dest=/etc/pam.d/su mode=0644
+
+- name: Add repos group
+  become: yes
+  group:
+    name: "{{ repo_group }}"
+    state: present
+
+- name: Create User Accounts
+  become: yes
+  user: name={{ item | basename }} shell=/bin/bash groups=sudo,{{ repo_group }} append=yes state=present
+  with_fileglob:
+    - users/*
+
+- name: Add ssh keys
+  become: yes
+  authorized_key: user={{ item | basename }} key="{{ lookup('file', item )}}"
+  with_fileglob:
+    - users/*
+
+- name: restart sshd
+  become: yes
+  service: name=ssh state=restarted

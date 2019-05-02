@@ -1,0 +1,47 @@
+---
+- include_vars: "vars/all.yml"
+- include_vars: "roles/update-repo/vars/main.yml"
+- include_vars: "vars/protected.yml"
+- name: Check if repo exists
+  stat:
+    path: "{{ repo_location_ansible }}"
+  register: repo_stat
+- name: Set repo permissions
+  become: yes
+  file:
+    mode: "0770"
+    recurse: yes
+    owner: "{{ bot_user_hockeybot }}"
+    path: "{{ repo_location_ansible }}"
+    group: "{{ repo_group }}"
+  when: repo_stat.stat.exists == true
+- include: "common-tasks/clone-and-inform-to-slack.yml"
+  vars:
+    repo_name: "Ansible"
+    git_repo: "{{ git_repo_ansible }}"
+    repo_location: "{{ repo_location_ansible }}"
+    service_name: "ansible-bot-deployment"
+    pull_request_url: "{{ pull_request }}"
+    bot_user: "{{ bot_user_hockeybot }}"
+    slack_token: "{{ slack_token_hockeybot }}"
+- name: Set repo permissions
+  become: yes
+  file:
+    mode: "0770"
+    recurse: yes
+    owner: "{{ bot_user_hockeybot }}"
+    path: "{{ repo_location_ansible }}"
+    group: "{{ repo_group }}"
+- name: Install preqs
+  become: yes
+  shell: ansible-galaxy install -r {{ repo_location_ansible }}/requirements.yml
+  environment:
+    ANSIBLE_ROLES_PATH: /etc/ansible/roles
+- name: Copy Vault Password
+  become: yes
+  copy:
+    content: "{{ vault_password }}"
+    dest: "{{ repo_location_ansible }}/ansible_vault_password"
+    owner: "{{ bot_user_hockeybot }}"
+    group: "{{ repo_group }}"
+    mode: "0660"

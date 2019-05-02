@@ -1,0 +1,9 @@
+---
+repo_location_buildbot: "/srv/repos/lita-buildbot"
+git_repo_buildbot: git@github.com:anki/lita-buildbot.git
+service_name_buildbot: lita-buildbot
+config_name_buildbot: "{{ service_name_buildbot }}.conf"
+config_location_buildbot: "{{ config_dir }}/{{ config_name_buildbot }}"
+pull_request: https://github.com/anki/lita-buildbot/pull/
+log_filepath_last_run: "/tmp/buildbot-rspec-last-run-result.log"
+log_filepath_all_time: "/tmp/buildbot-rspec.log"

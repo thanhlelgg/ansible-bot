@@ -1,0 +1,5 @@
+---
+repo_location_cozmo: "/srv/repos/cozmo-one"
+git_repo_cozmo: git@github.com:/anki/cozmo-one.git
+firmware_dir: "{{ repo_location_cozmo }}/robot/tools/"
+firmware_name: run-firmwarecrashbot.sh

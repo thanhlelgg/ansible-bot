@@ -1,0 +1,58 @@
+- include_vars: "vars/all.yml"
+- name: Set Service Permissions
+  become: yes
+  file:
+    path: "{{ config_location }}"
+    mode: "a+x"
+- name: Install Bundler
+  become: yes
+  environment:
+    PATH: "{{ gem_binary }}:{{ rubies_binary }}:{{ ansible_env.PATH }}"
+  gem:
+    name: bundler
+    state: present
+    version: 1.15.1
+    user_install: no
+- name: Install vendor
+  become: yes
+  environment:
+    PATH: "{{ gem_binary }}:{{ rubies_binary }}:{{ ansible_env.PATH }}"
+  bundler:
+    state: present
+    chdir: "{{ repo_location }}/workspace"
+    extra_args: --path vendor/ --binstubs bin
+- name: Start {{ bot_name }} Service
+  become: yes
+  service:
+    name: "{{ service_name }}"
+    state: restarted
+- name: Wait for bot to start
+  pause:
+    seconds: 12
+- name: Verify {{ bot_name }} started
+  become: yes
+  command: service {{ service_name }} status
+  register: service_status
+  failed_when: "'stop' in service_status.stdout"
+  ignore_errors: yes
+  args:
+    warn: false
+- name: Restore {{ bot_name }} Repo
+  become: yes
+#Currently the ansible command copy with remote_src does not support recursive copying.
+  command: cp -rf --preserve=mode,ownership {{ repo_location }}_bk {{ repo_location }}
+  ignore_errors: no
+  when: "'stop' in service_status.stdout"
+- name: Restore {{ bot_name }} Config
+  become: yes
+  copy:
+    src: "{{ config_location }}_bk"
+    dest: "{{ config_location }}"
+    remote_src: True
+  when: "'stop' in service_status.stdout"
+- name: Start Old {{ bot_name }} Service
+  become: yes
+  service:
+    name: "{{ service_name }}"
+    state: restarted
+  when: "'stop' in service_status.stdout"

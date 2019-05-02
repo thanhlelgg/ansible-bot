@@ -1,0 +1,28 @@
+---
+- include_vars: "vars/all.yml"
+- include_vars: "roles/self-updater-service/vars/main.yml"
+- include_vars: "vars/protected.yml"
+- name: Copy Hockeybot Updater Service
+  become: yes
+  copy:
+    src: "{{ config_name_ansible }}"
+    dest: "{{ config_dir }}"
+- name: Replace name in Hockeybot Updater Service
+  become: yes
+  replace:
+    path: "{{ config_dir }}{{ config_name_ansible }}"
+    replace: "{{ bot_user_hockeybot }}"
+    regexp: 'BOT_USER'
+- name: Replace vars in Hockeybot Updater Service
+  become: yes
+  lineinfile:
+    path: "{{ config_dir }}{{ config_name_ansible }}"
+    regexp: '^env {{ item.name }}.*$'
+    line: "env {{ item.name }}={{ item.value }}"
+  with_items:
+    - { name: "SLACK_TOKEN", value: "{{ slack_token_hockeybot }}" }
+- name: Set Service Permissions
+  become: yes
+  file:
+    path: "{{ config_location_ansible }}"
+    mode: "a+x"

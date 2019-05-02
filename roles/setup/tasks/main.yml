@@ -1,0 +1,159 @@
+---
+- include_vars: "vars/all.yml"
+- include_vars: "vars/protected.yml"
+- name: Install Prereqs
+  become: yes
+  apt:
+    name: "{{ item }}"
+    state: present
+    allow_unauthenticated: yes
+    update_cache: yes
+  with_items:
+    - curl
+    - git
+    - sendmail
+    - socat
+    - vim
+    - libcurl4-openssl-dev
+    - unzip
+    - redis-server
+    - libyaml-dev
+    - libsqlite3-dev
+    - sqlite3
+    - libgmp-dev
+    - libgdbm-dev
+    - libncurses5-dev
+    - automake
+    - libtool
+    - bison
+    - libffi-dev
+    - libgmp-dev
+    - libreadline6-dev
+    - g++
+    - gawk
+    - python
+    - python-dev
+    - python-pip
+
+- name: Check that the /usr/local/bin/python3.6 exists
+  stat:
+    path: /usr/local/bin/python3.6
+  register: python_result
+# Ubuntu 14.04 apt doesn't support installing python version > 3.4
+- block:
+  - name: Update apt-cache
+    become: yes
+    apt: update_cache=yes
+  - name: Install packages needed for installing Python
+    become: yes
+    apt: pkg={{ item }}
+    with_items:
+      - wget
+      - xz-utils
+      - build-essential
+      - libreadline-dev
+      - libssl-dev
+      - openssl
+  - name: Extract python 3.6.4 into /tmp
+    unarchive:
+      src: https://www.python.org/ftp/python/3.6.4/Python-3.6.4.tar.xz
+      dest: /tmp/
+      remote_src: yes
+  - name: Configure python 3.6.4
+    shell: ./configure chdir=/tmp/Python-3.6.4
+  - name: Make
+    shell: make chdir=/tmp/Python-3.6.4
+  - name: Install Python 3.6.4
+    shell: make install chdir=/tmp/Python-3.6.4
+    become: yes
+  - name: Remove tmp files used for Python 3.6.4 installation
+    become: yes
+    file: 
+      path: "{{ item }}"
+      state: absent
+    with_items:
+      - /tmp/Python.tar.xz
+      - /tmp/Python-3.6.4
+  when: python_result.stat.exists == False
+- name: Install pip3 items 
+  become: yes
+  pip:
+    name: "{{ item.name }}"
+    version: "{{ item.version }}"
+    executable: pip3
+  with_items:
+    - { name: jira, version: 1.0.7 }
+    - { name: boto3, version: 1.4.7 }
+    - { name: requests, version: 2.18.4 }
+
+- name: Install pip2 items  
+  become: yes
+  pip:
+    name: "{{ item.name }}"
+    version: "{{ item.version }}"
+    executable: pip2
+  with_items:
+    - { name: boto3, version: 1.4.7 }
+    - { name: requests, version: 2.18.4 }  
+# We need ansible 2.5 for python3 to resolve some bugs with older versions
+- name: Install ansible
+  become: yes
+  pip:
+    name: ansible
+    version: 2.5.0
+    executable: pip3
+- name: Remove .gnupg
+  become: yes
+  file:
+    state: absent
+    path: /root/.gnupg
+- name: Make shared repo dir
+  become: yes
+  file:
+    state: directory
+    path: /srv/repos
+    mode: 0770
+    group: "{{ repo_group }}"
+- name: Upload Crash data to S3
+  become: yes
+  cron:
+    name: "upload crash data"
+    state: present
+    hour: "0"
+    minute: "30"
+    job: "/srv/repos/lita-slack-jira-hockeyapp-mode/scripts/s3_push_hockeyapp_crash_data.sh >> /tmp/upstart-s3-push-crash-data.log 2>&1"
+- name: Cozmo report
+  become: yes
+  cron:
+    name: "cozmo report"
+    state: present
+    hour: "1"
+    minute: "0"
+    weekday: "0"
+    job: "curl -X POST --data-urlencode 'payload={\"text\":\"<@U0B6Z2K16> mode_report cozmo dev week\", \"type\":\"message\",\"subtype\":\"bot_message\",\"channel\":\"#bots\"}' https://hooks.slack.com/services/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 &>/dev/null"
+- name: OverDrive report
+  become: yes
+  cron:
+    name: "overdrive report"
+    state: present
+    hour: "2"
+    minute: "0"
+    weekday: "0"
+    job: "curl -X POST --data-urlencode 'payload={\"text\":\"<@U0B6Z2K16> mode_report overdrive dev week\", \"type\":\"message\",\"subtype\":\"bot_message\",\"channel\":\"#bots\"}' https://hooks.slack.com/services/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 &>/dev/null"
+- name: OverDrive prod report
+  become: yes
+  cron:
+    name: "overdrive prod report"
+    state: present
+    hour: "3"
+    minute: "0"
+    weekday: "0"
+    job: "curl -X POST --data-urlencode 'payload={\"text\":\"<@U0B6Z2K16> mode_report overdrive prod week\", \"type\":\"message\",\"subtype\":\"bot_message\",\"channel\":\"#bots\"}' https://hooks.slack.com/services/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 &>/dev/null"
+- name: App Crash report
+  become: yes
+  cron:
+    name: "app crash report"
+    state: present
+    hour: "3"
+    minute: "0"
+    job: "/srv/repos/apprunbot/run-apprunbot.sh >> /tmp/upstart-apprunbot.log 2>&1"

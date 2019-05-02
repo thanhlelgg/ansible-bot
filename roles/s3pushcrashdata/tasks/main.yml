@@ -1,0 +1,36 @@
+---
+- include_vars: "vars/all.yml"
+- include_vars: "roles/s3pushcrashdata/vars/main.yml"
+- include_vars: "vars/protected.yml"
+- name: Check if repo exists
+  stat:
+    path: "{{ repo_location_hockeybot }}"
+- name: Copy S3 Push Crash Data Service
+  become: yes
+  copy:
+    src: "{{ crashdata_name }}"
+    dest: "{{ crashdata_dir }}"
+    owner: "{{ bot_user_hockeybot }}"
+    group: "{{ repo_group }}"
+- name: Replace location in S3 Push Crash Data
+  become: yes
+  replace:
+    path: "{{ crashdata_dir }}{{ crashdata_name }}"
+    replace: "{{ repo_location_hockeybot }}"
+    regexp: 'REPO_HOME'
+- name: Replace vars in S3 Push Crash Data
+  become: no
+  lineinfile:
+    path: "{{ crashdata_dir }}{{ crashdata_name }}"
+    regexp: '^export {{ item.name }}.*$'
+    line: "export {{ item.name }}={{ item.value }}"
+  with_items:
+    - { name: "HOCKEYAPP_TOKEN", value: "{{ hockeyapp_token }}" }
+    - { name: "ACCESS_KEY", value: "{{ aws_access_key }}" }
+    - { name: "ACCESS_SECRET_KEY", value: "{{ aws_access_secret_key }}" }
+- name: Set permissions in S3 Push Crash Data
+  become: yes
+  file:
+    mode: "0770"
+    path: "{{ crashdata_dir }}{{ crashdata_name }}"
+    group: "{{ repo_group }}"

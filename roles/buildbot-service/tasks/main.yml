@@ -1,0 +1,42 @@
+---
+- include_vars: "vars/all.yml"
+- include_vars: "roles/buildbot-service/vars/main.yml"
+- include_vars: "vars/protected.yml"
+
+- include: common-tasks/backup-and-clean-repo.yml
+  vars:
+    bot_user: "{{ bot_user_buildbot }}"
+    repo_location: "{{ repo_location_buildbot }}"
+    config_location: "{{ config_location_buildbot }}"
+- include: common-tasks/clone-and-inform-to-slack.yml
+  vars:
+    repo_name: "Buildbot"
+    git_repo: "{{ git_repo_buildbot }}"
+    repo_location: "{{ repo_location_buildbot }}"
+    service_name: "{{ service_name_buildbot }}"
+    pull_request_url: "{{ pull_request }}"
+    bot_user: "{{ bot_user_buildbot }}"
+- include: common-tasks/setup-bot-service.yml
+  vars:
+    bot_user: "{{ bot_user_buildbot }}"
+    config_name: "{{ config_name_buildbot }}"
+    item_list:
+      - { name: "SLACK_TOKEN", value: "{{ slack_token_buildbot }}" }
+      - { name: "TEAMCITY_USERNAME", value: "{{ teamcity_user }}" }
+      - { name: "TEAMCITY_PASSWORD", value: "{{ teamcity_password }}" }
+      - { name: "ARTIFACTORY_USERNAME", value: "{{ artifactory_username }}" }
+      - { name: "ARTIFACTORY_PASSWORD", value: "{{ artifactory_password }}" }
+- include: common-tasks/install-and-restart-bot.yml
+  vars:
+    bot_name: Buildbot
+    config_location: "{{ config_location_buildbot }}"
+    gem_binary: "{{ gem_binary_buildbot }}"
+    rubies_binary: "{{ rubies_binary_buildbot }}"
+    repo_location: "{{ repo_location_buildbot }}"
+    service_name: "{{ service_name_buildbot }}"
+- include: common-tasks/run-rspec-and-post-result-to-slack.yml
+  vars:
+    bot_name: "Buildbot"
+    last_run_log_file: "{{ log_filepath_last_run }}"
+    all_time_log_file: "{{ log_filepath_all_time }}"
+    repo_location: "{{ repo_location_buildbot }}"

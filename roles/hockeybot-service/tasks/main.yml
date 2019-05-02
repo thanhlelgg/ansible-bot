@@ -1,0 +1,48 @@
+---
+- include_vars: "vars/all.yml"
+- include_vars: "roles/hockeybot-service/vars/main.yml"
+- include_vars: "vars/protected.yml"
+
+- include: common-tasks/backup-and-clean-repo.yml
+  vars:
+    bot_user: "{{ bot_user_hockeybot }}"
+    repo_location: "{{ repo_location_hockeybot }}"
+    config_location: "{{ config_location_hockeybot }}"
+- include: common-tasks/clone-and-inform-to-slack.yml
+  vars:
+    repo_name: "Hockeybot"
+    git_repo: "{{ git_repo_hockeybot }}"
+    repo_location: "{{ repo_location_hockeybot }}"
+    service_name: "{{ service_name_hockeybot }}"
+    pull_request_url: "{{ pull_request }}"
+    bot_user: "{{ bot_user_hockeybot }}"
+- include: common-tasks/setup-bot-service.yml
+  vars:
+    bot_user: "{{ bot_user_hockeybot }}"
+    config_name: "{{ config_name_hockeybot }}"
+    item_list:
+      - { name: "SLACK_TOKEN", value: "{{ slack_token_hockeybot }}" }
+      - { name: "HOCKEYAPP_TOKEN", value: "{{ hockeyapp_token }}" }
+      - { name: "JIRA_USERNAME", value: "{{ jira_username }}" }
+      - { name: "JIRA_PASSWORD", value: "{{ jira_password }}" }
+      - { name: "MODE_TOKEN", value: "{{ mode_token_hockeybot }}" }
+      - { name: "MODE_PASSWORD", value: "{{ mode_password_hockeybot }}" }
+      - { name: "TO_EMAIL", value: "{{ to_email }}" }
+      - { name: "CC_EMAIL", value: "{{ cc_email }}" }
+      - { name: "ACCESS_GOOGLEPLAY_TOKEN", value: "{{ access_googleplay_token }}" }
+      - { name: "EZ_TOKEN", value: "{{ ez_office_token }}" }
+      - { name: "GIT_TOKEN", value: "{{ git_token }}" }
+- include: common-tasks/install-and-restart-bot.yml
+  vars:
+    bot_name: Hockeybot
+    config_location: "{{ config_location_hockeybot }}"
+    gem_binary: "{{ gem_binary_hockeybot }}"
+    rubies_binary: "{{ rubies_binary_hockeybot }}"
+    repo_location: "{{ repo_location_hockeybot }}"
+    service_name: "{{ service_name_hockeybot }}"
+- include: common-tasks/run-rspec-and-post-result-to-slack.yml
+  vars:
+    bot_name: "Hockeybot"
+    last_run_log_file: "{{ log_filepath_last_run }}"
+    all_time_log_file: "{{ log_filepath_all_time }}"
+    repo_location: "{{ repo_location_hockeybot }}"

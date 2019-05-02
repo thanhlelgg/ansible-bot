@@ -1,0 +1,4 @@
+---
+repo_location_apprun: "/srv/repos/apprunbot"
+git_repo_apprun: git@github.com:/anki/apprunbot.git
+apprun_name: run-apprunbot.sh

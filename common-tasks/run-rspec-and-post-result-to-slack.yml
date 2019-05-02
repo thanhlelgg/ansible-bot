@@ -1,0 +1,23 @@
+- include_vars: "vars/all.yml"
+- name: Run rspec test
+  shell: "source /srv/.rvm/scripts/rvm && rvm ruby-2.1.0
+          && bin/rspec --pattern spec/lita/handlers/*_spec_anki.rb -f d -f p --out 
+          {{ last_run_log_file }} >> {{ all_time_log_file }}"
+  args:
+    chdir: "{{ repo_location }}/workspace"
+    executable: /bin/bash
+  ignore_errors: yes
+- name: Get rspec result
+  shell: "tail -n 1000 {{ last_run_log_file }} | grep -i -E 'Finished in|examples,'"
+  register: result
+- name: Post to Slack
+  uri:
+    url: https://slack.com/api/chat.postMessage
+    method: POST
+    body: "token={{ slack_token_hockeybot }}& channel={{ slack_channel }}& 
+           text={{ bot_name }} Rspec Test Results: \n 
+           *{{ result.stdout | regex_replace('\n',': ') }}*\n
+             Last rspec run full log file can be found in `{{ last_run_log_file }}`\n
+             For all rspec runs log file, refer to `{{ all_time_log_file }}`
+             & username= {{ bot_user_hockeybot }}"
+             

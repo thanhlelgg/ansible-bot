@@ -1,0 +1,19 @@
+- include_vars: "vars/all.yml"
+- name: Copy BuildBot Service
+  become: yes
+  copy:
+    src: "{{ config_name }}"
+    dest: "{{ config_dir }}"
+- name: Replace name in BuildBot Service
+  become: yes
+  replace:
+    path: "{{ config_dir }}{{ config_name }}"
+    replace: "{{ bot_user }}"
+    regexp: 'BOT_USER'
+- name: Replace vars in BuildBot Service
+  become: yes
+  lineinfile:
+    path: "{{ config_dir }}{{ config_name }}"
+    regexp: '^env {{ item.name }}.*$'
+    line: "env {{ item.name }}={{ item.value }}"
+  with_items: "{{ item_list }}"

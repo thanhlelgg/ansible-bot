@@ -1,0 +1,4 @@
+---
+repo_location_ansible: "/srv/repos/ansible-bot-deployment"
+git_repo_ansible: git@github.com:/anki/ansible-bot-deployment.git
+pull_request: https://github.com/anki/ansible-bot-deployment/pull/

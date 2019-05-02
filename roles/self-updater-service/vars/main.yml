@@ -1,0 +1,4 @@
+---
+service_name_ansible: hockeybot-updater
+config_name_ansible: "{{ service_name_ansible }}.conf"
+config_location_ansible: "{{ config_dir }}/{{ config_name_ansible }}"
